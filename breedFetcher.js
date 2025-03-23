@@ -1,27 +1,34 @@
 const needle = require('needle');
 
-const breedName = process.argv[2];
+const fetchBreedDescription = function(breedName, callback) {
 
-needle.get(`https://api.thecatapi.com/v1/breeds/search?q=${breedName}`, (error, response, body) => {
+  needle.get(`https://api.thecatapi.com/v1/breeds/search?q=${breedName}`, (error, response, body) => {
+    
+    //return connection error if there is 
+    if (error) {
+      callback(error, null);
+      return ;
+    } 
   
-  //pring out connection error if there is any
-  if (error) {
-    console.log(error);
-    return;
-  } 
+    //return error code if there is
+    if (response.statusCode !== 200) {
+      const err = new Error(`Failed to request breed information. Status Code: ${response.statusCode}`);
+      callback(err, null); // Pass error to callback
+      return;
+    } 
+    
+    //return null if empty page, return desciption if fetched
+    if (body.length === 0) {
+      callback(null, null); // Pass no error but null as description
+      return;
+    } else {
+      callback(null, body[0].description);
+    }
+    
+  });
+}
 
-  //print out error code if content is not fetched
-  if (response.statusCode !== 200) {
-    console.log('Error: ', response.statusCode);
-    return;
-  } 
-  
-  //print out description if the breed is there and message showing if the breed is not
-  if (body.length === 0) {
-    console.log(`No breed found matching the name: ${breedName}`);
-  } else {
-    console.log(body[0].description);
-  }
-  
-});
+
+module.exports = { fetchBreedDescription };
+
 
